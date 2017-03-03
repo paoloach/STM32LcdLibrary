@@ -15,6 +15,7 @@
 #include "SPFD5408.h"
 #include "ILI9325.h"
 #include "ILI9341.h"
+#include "TouchScreen.h"
 
 // Definitions visible only within this translation unit.
 namespace {
@@ -175,8 +176,12 @@ int main(int argc, char* argv[]) {
     graphics->drawChar( { 40, 250 }, 'o');
 
     trace_printf("---  END ----\n");
-    while (true)
-        ;
+
+    TouchScreen ts(graphics->width, graphics->height);
+    while (true){
+        auto point = ts.getRaw();
+        trace_printf("touch: %d, %d", point.x, point.y );
+    }
 }
 
 #pragma GCC diagnostic pop

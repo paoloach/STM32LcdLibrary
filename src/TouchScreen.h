@@ -9,10 +9,22 @@
 #define TOUCHSCREEN_H_
 
 #include "Pins.h"
+#include "GFX.h"
 
 class TouchScreen {
 public:
-    TouchScreen();
+    TouchScreen(uint16_t width, uint16_t height);
+    Point getPoint();
+    Point getRaw();
+    uint16_t    width;
+    uint16_t    height;
+    uint16_t    left;
+    uint16_t    right;
+    uint16_t    top;
+    uint16_t    bottom;
+private:
+
+    constexpr static int NUM_SAMPLES=2;
 };
 
 #endif /* TOUCHSCREEN_H_ */

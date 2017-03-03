@@ -77,6 +77,10 @@ public:
 class Point {
 
 public:
+    Point( Point && point): x(point.x), y(point.y){}
+
+    Point( Point & point): x(point.x), y(point.y){}
+
     constexpr Point(int16_t x, int16_t y) :
             x(x), y(y) {
     }
@@ -122,6 +126,9 @@ public:
     void setFont(Font * font){this->font = font; }
     void setForeground(Color6Bit color){foreground = color;}
     void setBackground(Color6Bit color){background = color;}
+
+    uint16_t width;
+    uint16_t height;
 private:
     void fillCircleHelper(Point c, int16_t r, uint8_t cornername, int16_t delta, Color6Bit color);
     void putCharPixel(Point p, uint8_t bits, uint8_t size);
@@ -129,8 +136,6 @@ protected:
     LcdID driver;
     RotationId rotation;
 
-    uint16_t width;
-    uint16_t height;
     const Font * font;
     Color6Bit foreground;
     Color6Bit background;

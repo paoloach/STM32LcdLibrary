@@ -12,13 +12,10 @@
 
 
 /**
- * xp --> A0
- * xm --> A1
- * yp --> A2
- * ym --> A3
+
  * CS --> B0
- * RS --> B1
- * WR --> B5
+ * RS --> B1 --> A6
+ * WR --> B5 --> A7
  * RD --> B6
  * D0 --> B7
  * D1 --> B8
@@ -62,8 +59,10 @@ constexpr auto XP_PORT=D6_PORT;
 constexpr auto XP_PIN=GPIO_Pin_13;
 constexpr auto XM_PORT=RS_PORT;
 constexpr auto XM_PIN=RS_PIN;
+constexpr auto XM_ADC_PORT= ADC_Channel_6;
 constexpr auto YP_PORT=WR_PORT;
 constexpr auto YP_PIN=WR_PIN;
+constexpr auto YP_ADC_PORT = ADC_Channel_7;
 constexpr auto YM_PORT=D7_PORT;
 constexpr auto YM_PIN=D7_PIN;
 
