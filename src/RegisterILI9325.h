@@ -29,12 +29,14 @@ enum class ILI9325_REG {
     ILI9325_RGBCtrll = 0x0C,
     ILI9325_FrmMarkerPos = 0x0D,
     ILI9325_RGBCtrl2 = 0x0F,
+
+
     ILI9325_PowerCtrl1 = 0x10,
     ILI9325_PowerCtrl2 = 0x11,
     ILI9325_PowerCtrl3 = 0x12,
     ILI9325_PowerCtrl4 = 0x13,
-    S6D0129_PowerCtrl3 = 0x13,
-    S6D0129_PowerCtrl4 = 0x14,
+    S6D0129_PowerCtrl4 = 0x13,
+    ILI9320_PowerCtrl4 = 0x14,
     ILI9325_RamAddressHor = 0x20,
     ILI9325_RamAddressVert = 0x21,
     ILI9325_RamRW = 0x22,
@@ -78,14 +80,25 @@ enum class ILI9325_REG {
     ILI9325_DriverOutputCtrl2 = 0x60,
     ILI9325_BaseDisplayCtrl = 0x61,
     ILI9325_VertScrollCtrl = 0x6A,
+    ILI9320_PartImage1Display=0x80,
+    ILI9320_PartImage1AresStart=0x81,
+    ILI9320_PartImage1AreaEnd=0x82,
+    ILI9320_PartImage2Display=0x83,
+    ILI9320_PartImage2AresStart=0x84,
+    ILI9320_PartImage2AreaEnd=0x85,
+
     ILI9325_PanelIfCtrl1 = 0x90,
     ILI9325_PanelIfCtrl2 = 0x92,
-    ILI9325_PanelIfCtrl4 = 0x95
+    ILI9320_PanelIfCtrl3= 0x93,
+    ILI9325_PanelIfCtrl4 = 0x95,
+    ILI9320_PanelIfCtrl5 = 0x97,
+    ILI9320_PanelIfCtrl6 = 0x98
 };
 
 class RegisterBaseILI9325 {
 public:
     static void writeIndex(uint8_t index) {
+        RS_PORT->BRR = RS_PIN;
         WR_PORT->BRR = WR_PIN;
         setData(0);
         WR_PORT->BSRR = WR_PIN;
@@ -94,15 +107,31 @@ public:
                 "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
         );
         WR_PORT->BRR = WR_PIN;
-        setData(index); // Use more that 50ns
+        setData(index);
         WR_PORT->BSRR = WR_PIN;
     }
 
     static void writeData(uint16_t data) {
         WR_PORT->BRR = WR_PIN;
-        setData(data  >> 8);
+        setData(data >> 8);
         WR_PORT->BSRR = WR_PIN;
         __asm(
                 "nop\n" // 14 ns at 70 Mhz
@@ -114,6 +143,16 @@ public:
         // Wait for 50 ns
         setData(data); // Use more that 50ns
         WR_PORT->BSRR = WR_PIN;
+        __asm(
+                "nop\n" // 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+        );
     }
 
     static void writeStrobe() {
@@ -150,23 +189,9 @@ class RegisterWriteBaseILI9325: public RegisterBaseILI9325 {
 class RegisterReadBaseILI9325: public RegisterBaseILI9325 {
 public:
     static uint16_t read16Bit() {
-        activeRD();
-        // wait 150 ns
-        __asm(
-                "nop\n" // 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-        );
-        idleRD();
+        RD_PORT->BRR = RD_PIN;
         uint8_t hi = ::readData();
-        activeRD();
+        RD_PORT->BSRR = RD_PIN;
         // wait 150 ns
         __asm(
                 "nop\n" // 14 ns at 70 Mhz
@@ -180,8 +205,23 @@ public:
                 "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
         );
-        idleRD();
+
+        RD_PORT->BRR = RD_PIN;
         uint8_t low = ::readData();
+        // wait 150 ns
+        __asm(
+                "nop\n" // 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+        );
+        RD_PORT->BSRR = RD_PIN;
         return ((uint16_t) hi << 8) | low;
     }
 };
@@ -190,16 +230,11 @@ template<ILI9325_REG I>
 class RegisterReadILI9325: public RegisterReadBaseILI9325 {
 public:
     static uint16_t get() {
-        command();
         RegisterBaseILI9325::writeIndex(static_cast<uint16_t>(index));
-        idleCS();
         dataPortToRead();
-        activeCS();
-        data();
+        RS_PORT->BSRR=RS_PIN;
         uint16_t value = read16Bit();
-        idleCS();
         dataPortToWrite();
-        activeCS();
         return value;
     }
 private:
@@ -268,7 +303,7 @@ public:
             );
             activeWR();
             // Wait for 50 ns
-            setData(color.getGreen()); // Use more that 50ns
+            setData(color.getBlue()); // Use more that 50ns
             idleWR();
             // wait 50ns
             __asm(
@@ -279,17 +314,17 @@ public:
             );
             activeWR();
             // Wait for 50 ns
-            setData(color.getBlue()); // Use more that 50ns
+            setData(color.getGreen()); // Use more that 50ns
             idleWR();
         }
     }
 };
 
-class ILI9325_PowerCtrl1 : public  RegisterWriteILI9325<ILI9325_REG::ILI9325_PowerCtrl1> {
+class ILI9325_PowerCtrl1: public RegisterWriteILI9325<ILI9325_REG::ILI9325_PowerCtrl1> {
 public:
-    void static setDriverQuality(DriverQuality quality, uint16_t otherBits){
+    void static setDriverQuality(DriverQuality quality, uint16_t otherBits) {
         uint8_t val = otherBits & 0xC7FF;
-        switch(quality){
+        switch (quality) {
         case DriverQuality::OFF:
             break;
         case DriverQuality::SMALL:

@@ -6,7 +6,7 @@
  */
 
 #ifndef ILI9325_H_
-#define ILI9325_H_setDriverQuality
+#define ILI9325_H_
 
 #include <functional>
 #include <tuple>
@@ -32,6 +32,7 @@ public:
     void static reset();
 private:
     void initILI9325();
+    void initILI9320();
     void initS6D0129();
 
     struct InitCmd {
@@ -46,6 +47,7 @@ private:
     static const uint32_t DEFAULT_HEIGTH = 320;
 
     static std::array<InitCmd, 48> ILI9235_init;
+    static std::array<InitCmd, 43> ILI9320_init;
     static std::array<InitCmd, 29> S6D0129_init;
 
 };

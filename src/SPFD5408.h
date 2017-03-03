@@ -15,7 +15,7 @@
 class SPFD5408 {
 public:
     SPFD5408();
-    LcdID readID(void);
+    static LcdID readID(void);
     void begin(LcdID id);
     void reset();
     void drawPixel(int16_t x, int16_t y, uint16_t color);
@@ -23,7 +23,6 @@ public:
     void flood(uint16_t color, uint32_t len);
 private:
 
-    void initIOPort();
 
 private:
     LcdID driver;

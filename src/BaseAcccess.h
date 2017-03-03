@@ -44,6 +44,9 @@ inline void initIOPort() {
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_Init(CS_PORT, &GPIO_InitStructure);
 
+    GPIO_InitStructure.GPIO_Pin = RESET_PIN;
+    GPIO_Init(RESET_PORT, &GPIO_InitStructure);
+
     GPIO_InitStructure.GPIO_Pin = RS_PIN;
     GPIO_Init(RS_PORT, &GPIO_InitStructure);
 
@@ -70,10 +73,11 @@ inline void initIOPort() {
     GPIO_InitStructure.GPIO_Pin = D7_PIN;
     GPIO_Init(D7_PORT, &GPIO_InitStructure);
 
-    GPIO_ResetBits(CS_PORT, CS_PIN);
-    GPIO_ResetBits(RS_PORT, RS_PIN);
-    GPIO_ResetBits(WR_PORT, WR_PIN);
-    GPIO_ResetBits(RD_PORT, RD_PIN);
+    GPIO_SetBits(CS_PORT, CS_PIN);
+    GPIO_SetBits(RESET_PORT, RESET_PIN);
+    GPIO_SetBits(RS_PORT, RS_PIN);
+    GPIO_SetBits(WR_PORT, WR_PIN);
+    GPIO_SetBits(RD_PORT, RD_PIN);
     GPIO_ResetBits(D0_PORT, D0_PIN);
     GPIO_ResetBits(D1_PORT, D1_PIN);
     GPIO_ResetBits(D2_PORT, D2_PIN);
@@ -257,9 +261,9 @@ inline uint8_t readDataOnPort(uint16_t io, GPIO_TypeDef * port ) {
 }
 
 inline uint8_t readData() {
-    volatile uint16_t data = 0;
-    volatile uint16_t portA = 0;
-    volatile uint16_t portB = 0;
+    uint16_t data = 0;
+    uint16_t portA = 0;
+    uint16_t portB = 0;
     uint16_t portC = 0;
     if (countDataOnPort(GPIOA)) {
         portA = GPIOA->IDR;
@@ -279,40 +283,47 @@ inline uint8_t readData() {
     if (countDataOnPort(GPIOC)) {
         data |= readDataOnPort(portC, GPIOC);
     }
-    GPIO_ResetBits(GPIOA, D3_PIN);
     return data;
 }
 
+inline void resetOn() {
+    RESET_PORT->BRR=RESET_PIN;
+}
+
+inline void resetOff() {
+    RESET_PORT->BSRR=RESET_PIN;
+}
+
 inline void activeWR() {
-    GPIO_ResetBits(WR_PORT, WR_PIN);
+    WR_PORT->BRR=WR_PIN;
 }
 
 inline void idleWR() {
-    GPIO_SetBits(WR_PORT, WR_PIN);
+    WR_PORT->BSRR=WR_PIN;
 }
 
 inline void activeRD() {
-    GPIO_ResetBits(RD_PORT, RD_PIN);
+    RD_PORT->BRR=RD_PIN;
 }
 
 inline void idleRD() {
-    GPIO_SetBits(RD_PORT, RD_PIN);
+    RD_PORT->BSRR=RD_PIN;
 }
 
 inline void activeCS() {
-    GPIO_ResetBits(CS_PORT, CS_PIN);
+    CS_PORT->BRR=CS_PIN;
 }
 
 inline void idleCS() {
-    GPIO_SetBits(CS_PORT, CS_PIN);
+    CS_PORT->BSRR=CS_PIN;
 }
 
 inline void command() {
-    GPIO_ResetBits(RS_PORT, RS_PIN);
+    RS_PORT->BRR=RS_PIN;
 }
 
 inline void data() {
-    GPIO_SetBits(RS_PORT, RS_PIN);
+    RS_PORT->BSRR=RS_PIN;
 }
 
 inline void strobeWR() {
@@ -333,46 +344,7 @@ inline void write(uint8_t value) {
     strobeWR();
 }
 
-inline uint8_t read8408() {
-    activeRD();
-// wait 170 (actually 154) ns
-    __asm(
-            "nop\n" // 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-            "nop\n"// 14 ns at 70 Mhz
-    );
-    uint8_t d = readData();
-    idleRD();
-    return d;
-}
 
-inline void writeRegister(uint8_t a, uint8_t d) {
-    command();
-    write(a);
-    data();
-    write(d);
-}
 
-inline void writeRegister(uint16_t a, uint16_t d) {
-    uint8_t hi, lo;
-    hi = a >> 8;
-    lo = a & 0xFF;
-    command();
-    write(hi);
-    write(lo);
-    hi = d >> 8;
-    lo = d & 0x0FF;
-    data();
-    write(hi);
-    write(lo);
-}
 
 #endif /* BASEACCCESS_H_ */

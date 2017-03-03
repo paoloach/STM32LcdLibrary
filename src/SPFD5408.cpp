@@ -12,8 +12,6 @@
 #define TFTHEIGHT  320
 
 SPFD5408::SPFD5408() {
-    initIOPort();
-
     rotation = 0;
     cursor_y = cursor_x = 0;
     textsize = 1;
@@ -23,11 +21,69 @@ SPFD5408::SPFD5408() {
 }
 
 LcdID SPFD5408::readID(void) {
-    activeCS();
-    command();
-    uint8_t hi = ::read8408();
-    uint8_t low = ::read8408();
+    dataPortToRead();
+    CS_PORT->BRR = CS_PIN;
+    RS_PORT->BRR = RS_PIN;
+    RD_PORT->BRR = RD_PIN;
+    __asm(
+               "nop\n" // 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
 
+               "nop\n"// 14 ns at 70 Mhz
+               "nop\n"// 14 ns at 70 Mhz
+       );
+    uint8_t hi = ::readData();
+    RD_PORT->BSRR = RD_PIN;
+    __asm(
+                  "nop\n" // 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+
+                  "nop\n" // 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+            );
+
+    RD_PORT->BRR = RD_PIN;
+       __asm(
+                  "nop\n" // 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+
+                  "nop\n"// 14 ns at 70 Mhz
+                  "nop\n"// 14 ns at 70 Mhz
+          );
+    uint8_t low = ::readData();
+
+    RD_PORT->BSRR = RD_PIN;
+    dataPortToWrite();
     uint16_t code = ((uint16_t) hi << 8) + low;
     if (code == 0x5408)
         return LcdID::ID_SPFD5408;
@@ -64,55 +120,7 @@ void SPFD5408::begin(LcdID id) {
     }
 }
 
-void SPFD5408::initIOPort() {
-    checkPorts();
 
-    GPIO_InitTypeDef GPIO_InitStructure;
-// Configure pin in output push/pull mode
-    GPIO_InitStructure.GPIO_Pin = CS_PIN;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_Init(CS_PORT, &GPIO_InitStructure);
-
-    GPIO_InitStructure.GPIO_Pin = RS_PIN;
-    GPIO_Init(RS_PORT, &GPIO_InitStructure);
-
-    GPIO_InitStructure.GPIO_Pin = WR_PIN;
-    GPIO_Init(WR_PORT, &GPIO_InitStructure);
-
-    GPIO_InitStructure.GPIO_Pin = RD_PIN;
-    GPIO_Init(RD_PORT, &GPIO_InitStructure);
-
-    GPIO_InitStructure.GPIO_Pin = D0_PIN;
-    GPIO_Init(D0_PORT, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = D1_PIN;
-    GPIO_Init(D1_PORT, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = D2_PIN;
-    GPIO_Init(D2_PORT, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = D3_PIN;
-    GPIO_Init(D3_PORT, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = D4_PIN;
-    GPIO_Init(D4_PORT, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = D5_PIN;
-    GPIO_Init(D5_PORT, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = D6_PIN;
-    GPIO_Init(D6_PORT, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = D7_PIN;
-    GPIO_Init(D7_PORT, &GPIO_InitStructure);
-
-    GPIO_ResetBits(CS_PORT, CS_PIN);
-    GPIO_ResetBits(RS_PORT, RS_PIN);
-    GPIO_ResetBits(WR_PORT, WR_PIN);
-    GPIO_ResetBits(RD_PORT, RD_PIN);
-    GPIO_ResetBits(D0_PORT, D0_PIN);
-    GPIO_ResetBits(D1_PORT, D1_PIN);
-    GPIO_ResetBits(D2_PORT, D2_PIN);
-    GPIO_ResetBits(D3_PORT, D3_PIN);
-    GPIO_ResetBits(D4_PORT, D4_PIN);
-    GPIO_ResetBits(D5_PORT, D5_PIN);
-    GPIO_ResetBits(D6_PORT, D6_PIN);
-    GPIO_ResetBits(D7_PORT, D7_PIN);
-}
 
 void SPFD5408::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
