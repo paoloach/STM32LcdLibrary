@@ -16,7 +16,7 @@
 // Driver for ILI9325 and S6D0129
 class ILI9325: public GFX {
 public:
-    ILI9325();
+    ILI9325(bool swapX=false);
 
     static bool checkPresence();
     void setRotation(RotationId rotation);
@@ -49,6 +49,7 @@ private:
     static std::array<InitCmd, 48> ILI9235_init;
     static std::array<InitCmd, 43> ILI9320_init;
     static std::array<InitCmd, 29> S6D0129_init;
+    bool swapX;
 
 };
 

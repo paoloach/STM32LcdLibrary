@@ -176,7 +176,7 @@ std::array<ILI9325::InitCmd, 29> ILI9325::S6D0129_init = {
 
 // @formatter:on
 
-ILI9325::ILI9325() {
+ILI9325::ILI9325(bool swapX):swapX(swapX) {
     width = DEFAULT_WIDTH;
     height = DEFAULT_HEIGTH;
     rotation = RotationId::ROT_0;
@@ -200,6 +200,7 @@ ILI9325::ILI9325() {
     if (code == 0x9320) {
         driver = LcdID::ID_932X;
         initILI9320();
+        swapX = true;
     }
     setRotation(rotation);
     flood(Color6Bit(0,0,0), DEFAULT_HEIGTH * DEFAULT_WIDTH);
@@ -392,6 +393,7 @@ void ILI9325::flood(Color6Bit color, uint32_t len) {
 void ILI9325::drawPixel(Point p, Color6Bit color) {
     if ((p.x < 0) || (p.y < 0) || (p.x >= width) || (p.y >= height))
         return;
+    p.x = width-p.x;
 
     activeCS();
     switch (rotation) {
@@ -419,6 +421,7 @@ void ILI9325::drawPixel(Point p, Color6Bit color) {
 void ILI9325::drawPixel(Point && p, Color6Bit color) {
     if ((p.x < 0) || (p.y < 0) || (p.x >= width) || (p.y >= height))
         return;
+    p.x = width-p.x;
 
     activeCS();
     switch (rotation) {
@@ -448,6 +451,7 @@ void ILI9325::drawPixel(Point && p, Color6Bit color) {
 void ILI9325::drawFastHLine(Point p, int16_t length, Color6Bit color) {
     int16_t x2;
 
+
     // Initial off-screen clipping
     if ((length <= 0) || (p.y < 0) || (p.y >= height) || (p.x >= width) || ((x2 = (p.x + length - 1)) < 0))
         return;
@@ -460,6 +464,7 @@ void ILI9325::drawFastHLine(Point p, int16_t length, Color6Bit color) {
         x2 = width - 1;
         length = x2 - p.x + 1;
     }
+    p.x = width-(p.x+length);
 
     setAddrWindow(p.x, p.y, x2, p.y);
     flood(color, length);
@@ -481,6 +486,7 @@ void ILI9325::drawFastVLine(Point p, int16_t length, Color6Bit color) {
         length = y2 - p.y + 1;
     }
 
+    p.x = width-p.x;
     setAddrWindow(p.x, p.y, p.x, y2);
     flood(color, length);
     setAddrWindow(0, 0, width - 1, height - 1);
@@ -507,6 +513,9 @@ void ILI9325::fillRect(int16_t x1, int16_t y1, int16_t w, int16_t h, Color6Bit f
         y2 = height - 1;
         h = y2 - y1 + 1;
     }
+
+    x2 = width-x2;
+
 
     setAddrWindow(x1, y1, x2, y2);
     flood(fillcolor, w * h);

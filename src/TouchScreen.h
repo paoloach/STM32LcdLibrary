@@ -23,7 +23,7 @@ public:
     uint16_t    top;
     uint16_t    bottom;
 private:
-
+    uint16_t readADC1(uint8_t channel);
     constexpr static int NUM_SAMPLES=2;
 };
 

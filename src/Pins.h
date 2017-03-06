@@ -32,10 +32,10 @@ constexpr auto RESET_PORT=GPIOA;
 #define RESET_PIN  GPIO_Pin_8
 constexpr auto CS_PORT=GPIOB;
 #define CS_PIN  GPIO_Pin_0
-constexpr auto RS_PORT=GPIOB;
+constexpr auto RS_PORT=GPIOA;
 #define RS_PIN  GPIO_Pin_1
-constexpr auto WR_PORT=GPIOB;
-#define WR_PIN  GPIO_Pin_5
+constexpr auto WR_PORT=GPIOA;
+#define WR_PIN  GPIO_Pin_0
 constexpr auto RD_PORT=GPIOB;
 #define RD_PIN  GPIO_Pin_6
 constexpr auto D0_PORT=GPIOB;
@@ -59,10 +59,10 @@ constexpr auto XP_PORT=D6_PORT;
 constexpr auto XP_PIN=GPIO_Pin_13;
 constexpr auto XM_PORT=RS_PORT;
 constexpr auto XM_PIN=RS_PIN;
-constexpr auto XM_ADC_PORT= ADC_Channel_6;
+constexpr auto XM_ADC_PORT= ADC_Channel_1;
 constexpr auto YP_PORT=WR_PORT;
 constexpr auto YP_PIN=WR_PIN;
-constexpr auto YP_ADC_PORT = ADC_Channel_7;
+constexpr auto YP_ADC_PORT = ADC_Channel_0;
 constexpr auto YM_PORT=D7_PORT;
 constexpr auto YM_PIN=D7_PIN;
 

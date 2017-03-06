@@ -121,9 +121,6 @@ private:
 ;
 
 int main(int argc, char* argv[]) {
-    // Send a greeting to the trace device (skipped on Release).
-    trace_puts("Hello ARM World!");
-
     // At this stage the system clock should have already been configured
     // at high speed.
     trace_printf("System clock: %u Hz\n", SystemCoreClock);
@@ -177,10 +174,10 @@ int main(int argc, char* argv[]) {
 
     trace_printf("---  END ----\n");
 
-    TouchScreen ts(graphics->width, graphics->height);
+    TouchScreen ts(240,320);
     while (true){
-        auto point = ts.getRaw();
-        trace_printf("touch: %d, %d", point.x, point.y );
+        auto point = ts.getPoint();
+        trace_printf("touch: %d, %d\n", point.x, point.y );
     }
 }
 

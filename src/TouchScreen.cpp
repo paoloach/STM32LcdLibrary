@@ -7,14 +7,17 @@
 
 #include <memory>
 #include "TouchScreen.h"
-
-TouchScreen::TouchScreen(uint16_t width, uint16_t height) : width(width), height(height){
-    left = 0;
-    right = 4096;
-    top = 0;
-    bottom = 4096;
+#include "diag/Trace.h"
+TouchScreen::TouchScreen(uint16_t width, uint16_t height) :
+        width(width), height(height) {
+    left = 720;
+    right = 3500;
+    top = 4000;
+    bottom = 650;
+    RCC_ADCCLKConfig(RCC_PCLK2_Div6);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOA, ENABLE);
     ADC_InitTypeDef ADC_InitStructure;
+    ADC_DeInit(ADC1);
 
     ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
     //We will convert multiple channels
@@ -43,13 +46,22 @@ TouchScreen::TouchScreen(uint16_t width, uint16_t height) : width(width), height
 
 }
 
-Point TouchScreen::getPoint() {
-    Point point(std::move(getRaw()));
-    point.x = ((uint32_t)width*(point.x - left))/(right-left);
-    point.y = ((uint32_t)height*(point.y - top))/(bottom-top);
-    return point;
+uint16_t TouchScreen::readADC1(uint8_t channel){
+  ADC_RegularChannelConfig(ADC1, channel, 1, ADC_SampleTime_1Cycles5);
+  // Start the conversion
+  ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+  // Wait until conversion completion
+  while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);
+  // Get the conversion value
+  return ADC_GetConversionValue(ADC1);
 }
 
+Point TouchScreen::getPoint() {
+    Point point(std::move(getRaw()));
+    point.x = ((uint32_t) width * (point.x - left)) / (right - left);
+    point.y = height -((uint32_t) height * (point.y - bottom)) / (top-bottom);
+    return point;
+}
 
 Point TouchScreen::getRaw() {
     Point point;
@@ -73,14 +85,15 @@ Point TouchScreen::getRaw() {
     GPIO_InitStructure.GPIO_Pin = XM_PIN;
     GPIO_Init(XM_PORT, &GPIO_InitStructure);
 
-    XP_PORT->BSRR = XP_PIN;
-    XM_PORT->BRR = XM_PIN;
-    ADC_RegularChannelConfig(ADC1, YP_ADC_PORT, 1, ADC_SampleTime_41Cycles5);
+    XP_PORT->BRR = XP_PIN;
+    XM_PORT->BSRR = XM_PIN;
+    ADC_RegularChannelConfig(ADC1, 0, 1, ADC_SampleTime_41Cycles5);
 
     uint16_t sample = 0;
-    sample += ADC_GetConversionValue(ADC1);
-    sample += ADC_GetConversionValue(ADC1);
-    point.x = sample/2;
+
+    sample += readADC1(YP_ADC_PORT);
+    sample += readADC1(YP_ADC_PORT);
+    point.x = sample / 2;
 
     GPIO_InitStructure.GPIO_Pin = YP_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
@@ -98,14 +111,13 @@ Point TouchScreen::getRaw() {
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
     GPIO_Init(XM_PORT, &GPIO_InitStructure);
 
-    YP_PORT->BSRR = XP_PIN;
-    YM_PORT->BRR = XM_PIN;
-    ADC_RegularChannelConfig(ADC1, XM_ADC_PORT, 1, ADC_SampleTime_41Cycles5);
+    YP_PORT->BSRR = YP_PIN;
+    YM_PORT->BRR = YM_PIN;
 
     sample = 0;
-    sample += ADC_GetConversionValue(ADC1);
-    sample += ADC_GetConversionValue(ADC1);
-    point.y = sample/2;
+    sample += readADC1(XM_ADC_PORT);
+    sample += readADC1(XM_ADC_PORT);
+    point.y = sample / 2;
 
     return point;
 }
