@@ -9,10 +9,11 @@
 #define GFX_H_
 
 #include <stdint.h>
+#include <memory>
 #include "BaseAcccess.h"
 
 enum class LcdID {
-    ID_932X, ID_7575, ID_9341, ID_HX8357D, ID_SPFD5408, ID_S6D0129, ID_UNKNOWN
+    ID_932X, ID_7575, ID_9341, ID_HX8357D, ID_SPFD5408, ID_S6D0129, ID_HX8367, ID_UNKNOWN
 };
 
 enum class RotationId {
@@ -20,12 +21,7 @@ enum class RotationId {
 };
 
 enum class DriverQuality {
-    OFF,
-    SMALL,
-    MEDIUM_LOW,
-    MEDIUM,
-    MEDIUM_HIGH,
-    HIGHT
+    OFF, SMALL, MEDIUM_LOW, MEDIUM, MEDIUM_HIGH, HIGHT
 };
 
 struct Font {
@@ -37,17 +33,14 @@ struct Font {
     const uint8_t * data;
 };
 
-
-
+extern const Font bigFont;
 
 class Color6Bit {
 private:
     uint8_t components[3];
 public:
-    Color6Bit(uint8_t red, uint8_t blue, uint8_t green) {
-        components[0] = red;
-        components[1] = green;
-        components[2] = blue;
+    constexpr Color6Bit(uint8_t red, uint8_t blue, uint8_t green) :
+            components { red, blue, green } {
     }
 
     bool operator==(Color6Bit & a) {
@@ -74,22 +67,20 @@ public:
     }
 };
 
+constexpr Color6Bit WHITE(255, 255, 255);
+constexpr Color6Bit BLACK(0, 0, 0);
+
 class Point {
 
 public:
-    Point( Point && point): x(point.x), y(point.y){}
+    Point(Point && point) :
+            x(point.x), y(point.y) {
+    }
 
-    Point( Point & point): x(point.x), y(point.y){}
+    Point(Point & point) :
+            x(point.x), y(point.y) {
+    }
 
-    constexpr Point(int16_t x, int16_t y) :
-            x(x), y(y) {
-    }
-    constexpr Point(int x, int16_t y) :
-            x(x), y(y) {
-    }
-    constexpr Point(int16_t x, int y) :
-            x(x), y(y) {
-    }
     constexpr Point(int x, int y) :
             x(x), y(y) {
     }
@@ -109,23 +100,39 @@ public:
         initIOPort();
     }
 
-    virtual void drawPixel(Point && point, Color6Bit color) =0;
-    virtual void drawFastHLine(Point point, int16_t length, Color6Bit color) = 0;
-    virtual void drawFastVLine(Point point, int16_t length, Color6Bit color) = 0;
+    void drawPixel(Point && point, Color6Bit color) {
+        if ((point.x < 0) || (point.y < 0) || (point.x >= width) || (point.y >= height))
+            return;
+        activeCS();
+        drawPixelInternal(std::move(point), std::move(color));
+        idleCS();
+    }
+    virtual void drawPixelInternal(Point && point, Color6Bit && color)=0;
+    virtual void setAddrWindow(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) =0;
+    virtual void flood(Color6Bit color, uint32_t len)=0;
 
+    void drawFastHLine(Point p, uint16_t length, Color6Bit color);
+    void drawFastVLine(Point point, uint16_t length, Color6Bit color);
     void drawLine(Point start, Point end, Color6Bit color);
     void drawCircle(Point center, int16_t r, Color6Bit color);
     void drawCircleHelper(Point center, int16_t r, uint8_t cornername, Color6Bit color);
     void fillCircle(Point center, int16_t r, Color6Bit color);
     void drawRect(Point leftTop, int16_t w, int16_t h, Color6Bit color);
-    void fillRect(Point leftTop, int16_t w, int16_t h, Color6Bit color);
+    void fillRect(Point && leftTop, int16_t w, int16_t h, Color6Bit color);
     void drawRoundRect(Point leftTop, int16_t w, int16_t h, int16_t r, Color6Bit color);
     void fillRoundRect(Point leftTop, int16_t w, int16_t h, int16_t r, Color6Bit color);
     void drawChar(Point p, unsigned char c, uint8_t size);
     void drawChar(Point p, unsigned char c);
-    void setFont(Font * font){this->font = font; }
-    void setForeground(Color6Bit color){foreground = color;}
-    void setBackground(Color6Bit color){background = color;}
+    void drawString(Point && p, const char * s);
+    void setFont(const Font * font) {
+        this->font = font;
+    }
+    void setForeground(Color6Bit color) {
+        foreground = color;
+    }
+    void setBackground(Color6Bit color) {
+        background = color;
+    }
 
     uint16_t width;
     uint16_t height;

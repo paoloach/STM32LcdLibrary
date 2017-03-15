@@ -208,16 +208,60 @@ const unsigned char font8_12Data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x40, 0xA4, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // ~
         };
 
-
 const Font bigFont = { 16, 16, 0x20, 0x5F, false, font16_16Data };
 const Font smallFont = { 8, 12, 0x20, 0x5F, false, font8_12Data };
 
-GFX::GFX() : foreground(255,255,255), background(0,0,0){
+GFX::GFX() :
+        foreground(255, 255, 255), background(0, 0, 0) {
     driver = LcdID::ID_UNKNOWN;
     rotation = RotationId::ROT_0;
     width = 0xFFFF;
     height = 0xFFFF;
     font = &bigFont;
+}
+
+void GFX::drawFastVLine(Point p, uint16_t length, Color6Bit color) {
+    int16_t y2;
+
+    // Initial off-screen clipping
+    if ((p.x < 0) || (p.x >= width) || (p.y >= height) || ((y2 = (p.y + length - 1)) < 0))
+        return;
+    if (p.y < 0) {
+        length += p.y;
+        p.y = 0;
+    }
+    if (y2 >= height) {
+        y2 = height - 1;
+        length = y2 - p.y + 1;
+    }
+
+    p.x = width - p.x;
+    activeCS();
+    setAddrWindow(p.x, p.y, p.x, y2);
+    flood(color, length);
+    idleCS();
+}
+
+void GFX::drawFastHLine(Point p, uint16_t length, Color6Bit color) {
+    int16_t x2;
+
+    // Initial off-screen clipping
+    if ((p.y < 0) || (p.y >= height) || (p.x >= width) || ((x2 = (p.x + length - 1)) < 0))
+        return;
+
+    if (p.x < 0) {        // Clip left
+        length += p.x;
+        p.x = 0;
+    }
+    if (x2 >= width) { // Clip right
+        x2 = width - 1;
+        length = x2 - p.x + 1;
+    }
+
+    activeCS();
+    setAddrWindow(p.x, p.y, x2, p.y);
+    flood(color, length);
+    idleCS();
 }
 
 void GFX::drawCircle(Point center, int16_t r, Color6Bit color) {
@@ -369,10 +413,39 @@ void GFX::drawRect(Point leftTop, int16_t w, int16_t h, Color6Bit color) {
     drawFastVLine(Point { leftTop.x + w - 1, leftTop.y }, h, color);
 }
 
-void GFX::fillRect(Point leftTop, int16_t w, int16_t h, Color6Bit color) {
-    for (int16_t i = leftTop.x; i < leftTop.x + w; i++) {
-        drawFastVLine(Point { i, leftTop.y }, h, color);
+void GFX::fillRect(Point && leftTop, int16_t w, int16_t h, Color6Bit color) {
+//    for (int16_t i = leftTop.x; i < leftTop.x + w; i++) {
+//        drawFastVLine(Point { i, leftTop.y }, h, color);
+//    }
+    int16_t x2, y2;
+
+
+    if ((w <= 0) || (h <= 0) || (leftTop.x >= width) || (leftTop.y >= height) || ((x2 = leftTop.x + w - 1) < 0) || ((y2 = leftTop.y + h - 1) < 0))
+        return;
+    if (leftTop.x < 0) {
+        w += leftTop.x;
+        leftTop.x = 0;
     }
+    if (leftTop.y < 0) {
+        h += leftTop.y;
+        leftTop.y = 0;
+    }
+    if (x2 >= width) {
+        x2 = width - 1;
+        w = x2 - leftTop.x + 1;
+    }
+    if (y2 >= height) {
+        y2 = height - 1;
+        h = y2 - leftTop.y + 1;
+    }
+
+    x2 = width - x2;
+
+    activeCS();
+    setAddrWindow(leftTop.x, leftTop.y, x2, y2);
+    flood(color, w * h);
+    setAddrWindow(0, 0, width - 1, height - 1);
+    idleCS();
 }
 
 void GFX::drawRoundRect(Point leftTop, int16_t w, int16_t h, int16_t r, Color6Bit color) {
@@ -406,14 +479,14 @@ void GFX::drawChar(Point p, unsigned char c, uint8_t size) {
 
     uint8_t dataLen = (font->xSize * font->ySize) / 8;
     const uint8_t * data = font->data + dataLen * c;
-    Point pixelPos=p;
+    Point pixelPos = p;
     int8_t x;
     int8_t y;
     if (font->row) {
         for (pixelPos.x = p.x, x = 0; x < font->xSize; x++, pixelPos.x += size) {
             uint8_t bit = 1;
             uint8_t row = *data;
-            for (pixelPos.y=p.y, y = 0; y < font->xSize; y++, pixelPos.y += size) {
+            for (pixelPos.y = p.y, y = 0; y < font->xSize; y++, pixelPos.y += size) {
                 putCharPixel(pixelPos, row, size);
                 row >>= 1;
                 bit++;
@@ -428,7 +501,7 @@ void GFX::drawChar(Point p, unsigned char c, uint8_t size) {
         for (pixelPos.y = p.y, y = 0; y < font->ySize; y++, pixelPos.y += size) {
             uint8_t bit = 1;
             uint8_t col = *data;
-            for (pixelPos.x = p.x,  x = 0; x < font->xSize; x++, pixelPos.x += size) {
+            for (pixelPos.x = p.x, x = 0; x < font->xSize; x++, pixelPos.x += size) {
                 putCharPixel(pixelPos, col, size);
                 col <<= 1;
                 bit++;
@@ -439,6 +512,14 @@ void GFX::drawChar(Point p, unsigned char c, uint8_t size) {
                 }
             }
         }
+    }
+}
+
+void GFX::drawString(Point && p, const char * s) {
+    while (*s != 0) {
+        drawChar(p, *s);
+        p.x += font->xSize;
+        s++;
     }
 }
 
@@ -454,14 +535,14 @@ void GFX::drawChar(Point p, unsigned char c) {
 
     uint8_t dataLen = (font->xSize * font->ySize) / 8;
     const uint8_t * data = font->data + dataLen * c;
-    Point pixelPos=p;
+    Point pixelPos = p;
     int8_t x;
     int8_t y;
     if (font->row) {
-        for (pixelPos.x = p.x, x = 0; x < font->xSize; x++, pixelPos.x ++) {
+        for (pixelPos.x = p.x, x = 0; x < font->xSize; x++, pixelPos.x++) {
             uint8_t bit = 1;
             uint8_t row = *data;
-            for (pixelPos.y=p.y, y = 0; y < font->xSize; y++, pixelPos.y ++) {
+            for (pixelPos.y = p.y, y = 0; y < font->xSize; y++, pixelPos.y++) {
                 putCharPixel(pixelPos, row, 1);
                 row >>= 1;
                 bit++;
@@ -473,10 +554,10 @@ void GFX::drawChar(Point p, unsigned char c) {
             }
         }
     } else {
-        for (pixelPos.y = p.y, y = 0; y < font->ySize; y++, pixelPos.y ++) {
+        for (pixelPos.y = p.y, y = 0; y < font->ySize; y++, pixelPos.y++) {
             uint8_t bit = 1;
             uint8_t col = *data;
-            for (pixelPos.x = p.x,  x = 0; x < font->xSize; x++, pixelPos.x ++) {
+            for (pixelPos.x = p.x, x = 0; x < font->xSize; x++, pixelPos.x++) {
                 putCharPixel(pixelPos, col, 1);
                 col <<= 1;
                 bit++;
@@ -493,15 +574,15 @@ void GFX::drawChar(Point p, unsigned char c) {
 void GFX::putCharPixel(Point p, uint8_t bits, uint8_t size) {
     if (bits & 0x80) {
         if (size == 1)
-            drawPixel( Point{p}, foreground);
+            drawPixel(Point { p }, foreground);
         else {
-            fillRect(Point{p}, size, size, foreground);
+            fillRect(Point { p }, size, size, foreground);
         }
     } else if (background != foreground) {
         if (size == 1)
-            drawPixel(Point{p}, background);
+            drawPixel(Point { p }, background);
         else {
-            fillRect(Point{p}, size, size, background);
+            fillRect(Point { p }, size, size, background);
         }
     }
 }

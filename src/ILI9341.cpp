@@ -114,87 +114,9 @@ void ILI9341::drawPixel(Point p, Color6Bit color) {
     idleCS();
 }
 
-void ILI9341::drawPixel(Point && p, Color6Bit color) {
-    if ((p.x < 0) || (p.y < 0) || (p.x >= width) || (p.y >= height))
-        return;
-    activeCS();
+void ILI9341::drawPixelInternal(Point && p, Color6Bit && color) {
     setAddrWindow(p.x, p.y, width - 1, height - 1);
     MemoryWrite::write(color);
-    idleCS();
-}
-
-void ILI9341::drawFastHLine(Point p, int16_t length, Color6Bit color) {
-    int16_t x2;
-
-    // Initial off-screen clipping
-    if ((length <= 0) || (p.y < 0) || (p.y >= height) || (p.x >= width) || ((x2 = (p.x + length - 1)) < 0))
-        return;
-
-    if (p.x < 0) {        // Clip left
-        length += p.x;
-        p.x = 0;
-    }
-    if (x2 >= width) { // Clip right
-        x2 = width - 1;
-        length = x2 - p.x + 1;
-    }
-
-    activeCS();
-    setAddrWindow(p.x, p.y, x2, p.y);
-    flood(color, length);
-    setAddrWindow(0, 0, width - 1, height - 1);
-    idleCS();
-}
-
-void ILI9341::drawFastVLine(Point p, int16_t length, Color6Bit color) {
-    int16_t y2;
-
-    // Initial off-screen clipping
-    if ((length <= 0) || (p.x < 0) || (p.x >= width) || (p.y >= height) || ((y2 = (p.y + length - 1)) < 0))
-        return;
-    if (p.y < 0) {
-        length += p.y;
-        p.y = 0;
-    }
-    if (y2 >= height) {
-        y2 = height - 1;
-        length = y2 - p.y + 1;
-    }
-
-    activeCS();
-    setAddrWindow(p.x, p.y, p.x, y2);
-    flood(color, length);
-    setAddrWindow(0, 0, width - 1, height - 1);
-    idleCS();
-}
-
-void ILI9341::fillRect(int16_t x1, int16_t y1, int16_t w, int16_t h, Color6Bit fillcolor) {
-    int16_t x2, y2;
-
-    if ((w <= 0) || (h <= 0) || (x1 >= width) || (y1 >= height) || ((x2 = x1 + w - 1) < 0) || ((y2 = y1 + h - 1) < 0))
-        return;
-    if (x1 < 0) {
-        w += x1;
-        x1 = 0;
-    }
-    if (y1 < 0) {
-        h += y1;
-        y1 = 0;
-    }
-    if (x2 >= width) {
-        x2 = width - 1;
-        w = x2 - x1 + 1;
-    }
-    if (y2 >= height) {
-        y2 = height - 1;
-        h = y2 - y1 + 1;
-    }
-
-    activeCS();
-    setAddrWindow(x1, y1, x2, y2);
-    flood(fillcolor, w * h);
-    setAddrWindow(0, 0, width - 1, height - 1);
-    idleCS();
 }
 
 } // end namespace ILI9341
