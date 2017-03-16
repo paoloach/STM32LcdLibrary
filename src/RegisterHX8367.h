@@ -134,6 +134,7 @@ protected:
     static uint8_t readData() {
         dataPortToRead();
         RD_PORT->BRR = RD_PIN;
+        RS_PORT->BSRR = RS_PIN;
 
         __asm(
                 "nop\n" // 14 ns at 70 Mhz
@@ -227,35 +228,43 @@ public:
         );
     }
     static void write(Color6Bit color, uint32_t len) {
+        command();
+        writeIndex(static_cast<uint8_t>(REG::SRamWrite));
+        __asm(
+                "nop\n" // 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+                "nop\n"// 14 ns at 70 Mhz
+        );
+        data();
         for (; len > 0; len--) {
-            command();
-            writeIndex(static_cast<uint8_t>(REG::SRamWrite));
-            data();
             activeWR();
             setData(color.getRed());
             idleWR();
-            // wait 50ns
+            // wait 42ns
             __asm(
                     "nop\n" // 14 ns at 70 Mhz
                     "nop\n"// 14 ns at 70 Mhz
                     "nop\n"// 14 ns at 70 Mhz
-                    "nop\n"// 14 ns at 70 Mhz
             );
             activeWR();
-            // Wait for 50 ns
             setData(color.getBlue()); // Use more that 50ns
             idleWR();
-            // wait 50ns
+            // wait 42ns
             __asm(
                     "nop\n" // 14 ns at 70 Mhz
                     "nop\n"// 14 ns at 70 Mhz
                     "nop\n"// 14 ns at 70 Mhz
-                    "nop\n"// 14 ns at 70 Mhz
             );
             activeWR();
-            // Wait for 50 ns
             setData(color.getGreen()); // Use more that 50ns
             idleWR();
+            // wait 42ns
+            __asm(
+                    "nop\n"// 14 ns at 70 Mhz
+                    "nop\n"// 14 ns at 70 Mhz
+                    "nop\n"// 14 ns at 70 Mhz
+            );
         }
     }
 };

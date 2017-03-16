@@ -20,7 +20,6 @@ public:
     ILI9341();
 
     static bool checkPresence();
-    void setRotation(RotationId rotation);
     void drawPixel(Point point, Color6Bit color);
     void drawPixelInternal(Point && point, Color6Bit && color) override;
     void setDriverQuality(DriverQuality driverQuality);

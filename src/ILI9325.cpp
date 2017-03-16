@@ -88,7 +88,6 @@ ILI9325::ILI9325(bool swapX) :
         swapX(swapX) {
     width = DEFAULT_WIDTH;
     height = DEFAULT_HEIGTH;
-    rotation = RotationId::ROT_0;
     activeCS();
     resetOn();
     Timer::sleep(5);
@@ -111,7 +110,6 @@ ILI9325::ILI9325(bool swapX) :
         initILI9320();
         swapX = true;
     }
-    setRotation(rotation);
     flood(Color6Bit(0, 0, 0), DEFAULT_HEIGTH * DEFAULT_WIDTH);
 }
 
@@ -180,80 +178,9 @@ void ILI9325::initS6D0129() {
 //    ILI9325_DisplCtrl1::write(0x0017);
 }
 
-void ILI9325::setRotation(RotationId rotation) {
-    uint16_t entryModeValue = 0x1030;
-    switch (rotation) {
-    case RotationId::ROT_0:
-        width = DEFAULT_WIDTH;
-        height = DEFAULT_HEIGTH;
-        entryModeValue = 0xD010;
-        break;
-    case RotationId::ROT_90:
-        height = DEFAULT_WIDTH;
-        width = DEFAULT_HEIGTH;
-        entryModeValue = 0xD028;
-        break;
-    case RotationId::ROT_180:
-        width = DEFAULT_WIDTH;
-        height = DEFAULT_HEIGTH;
-        entryModeValue = 0xD030;
-        break;
-    case RotationId::ROT_270:
-        height = DEFAULT_WIDTH;
-        width = DEFAULT_HEIGTH;
-        entryModeValue = 0xD018;
-        break;
-    }
 
-    activeCS();
-    ILI9325_EntryMode::write(entryModeValue);
-    setAddrWindow(0, 0, width - 1, height - 1);
-    idleCS();
-}
 
 void ILI9325::setAddrWindow(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
-    // Values passed are in current (possibly rotated) coordinate
-    // system.  932X requires hardware-native coords regardless of
-    // MADCTL, so rotate inputs as needed.  The address counter is
-    // set to the top-left corner -- although fill operations can be
-    // done in any direction, the current screen rotation is applied
-    // because some users find it disconcerting when a fill does not
-    // occur top-to-bottom.
-    uint16_t x = 0, y = 0, t;
-    switch (rotation) {
-    case RotationId::ROT_0:
-        x = left;
-        y = top;
-        break;
-    case RotationId::ROT_90:
-        t = left;
-        top = left;
-        left = DEFAULT_WIDTH - 1 - bottom;
-        bottom = right;
-        right = DEFAULT_WIDTH - 1 - t;
-        x = right;
-        y = top;
-        break;
-    case RotationId::ROT_180:
-        t = left;
-        left = DEFAULT_WIDTH - 1 - right;
-        right = DEFAULT_WIDTH - 1 - t;
-        t = top;
-        top = DEFAULT_HEIGTH - 1 - bottom;
-        bottom = DEFAULT_HEIGTH - 1 - t;
-        x = right;
-        y = bottom;
-        break;
-    case RotationId::ROT_270:
-        t = left;
-        left = top;
-        top = DEFAULT_HEIGTH - 1 - right;
-        right = bottom;
-        bottom = DEFAULT_HEIGTH - 1 - t;
-        x = left;
-        y = bottom;
-        break;
-    }
     if (driver == LcdID::ID_932X) {
         ILI9325_HorStart::write(left); // Set address window
         ILI9325_HorEnd::write(right);
@@ -261,13 +188,13 @@ void ILI9325::setAddrWindow(uint16_t left, uint16_t top, uint16_t right, uint16_
         ILI9325_VertEnd::write(bottom);
     }
     if (driver == LcdID::ID_S6D0129) {
-        t = (left & 0xFF) | ((right & 0xFF) << 8);
+        auto t = (left & 0xFF) | ((right & 0xFF) << 8);
         S6D019_HorWindowAddress::write(t);
         S6D019_VertWindowAddressStart::write(top);
         S6D019_VertWindowAddressEnd::write(bottom);
     }
-    ILI9325_RamAddressHor::write(x); // Set address counter to top left
-    ILI9325_RamAddressVert::write(y);
+    ILI9325_RamAddressHor::write(left);
+    ILI9325_RamAddressVert::write(top);
 }
 
 void ILI9325::reset() {
@@ -299,22 +226,6 @@ void ILI9325::drawPixel(Point p, Color6Bit color) {
     p.x = width - p.x;
 
     activeCS();
-    switch (rotation) {
-    case RotationId::ROT_0:
-        break;
-    case RotationId::ROT_90:
-        p.y = DEFAULT_WIDTH - 1 - p.y;
-        std::swap(p.x, p.y);
-        break;
-    case RotationId::ROT_180:
-        p.x = DEFAULT_WIDTH - 1 - p.x;
-        p.y = DEFAULT_HEIGTH - 1 - p.y;
-        break;
-    case RotationId::ROT_270:
-        p.x = DEFAULT_HEIGTH - 1 - p.x;
-        std::swap(p.x, p.y);
-        break;
-    }
     ILI9325_RamAddressHor::write(p.x);
     ILI9325_RamAddressVert::write(p.y);
     ILI9325_RamRW::write(color);
@@ -324,22 +235,6 @@ void ILI9325::drawPixel(Point p, Color6Bit color) {
 void ILI9325::drawPixelInternal(Point && p, Color6Bit && color) {
     p.x = width - p.x;
 
-    switch (rotation) {
-    case RotationId::ROT_0:
-        break;
-    case RotationId::ROT_90:
-        p.y = DEFAULT_WIDTH - 1 - p.y;
-        std::swap(p.x, p.y);
-        break;
-    case RotationId::ROT_180:
-        p.x = DEFAULT_WIDTH - 1 - p.x;
-        p.y = DEFAULT_HEIGTH - 1 - p.y;
-        break;
-    case RotationId::ROT_270:
-        p.x = DEFAULT_HEIGTH - 1 - p.x;
-        std::swap(p.x, p.y);
-        break;
-    }
     ILI9325_RamAddressHor::write(p.x);
     ILI9325_RamAddressVert::write(p.y);
     ILI9325_RamRW::write(color);

@@ -51,6 +51,10 @@ HX8367::HX8367() {
     Timer::sleep(40);
     DisplayCtrl3::write(0x3F);
     MemoryAccessCtrl::write(18);
+
+    setAddrWindow(0, 0, width - 1, height - 1);
+    flood(Color6Bit(255,255,255), width*height);
+
     idleCS();
 }
 
@@ -61,7 +65,7 @@ bool HX8367::checkPresence() {
     resetOff();
     Timer::sleep(120);
 
-    auto id = ID::read();
+    volatile auto id = ID::read();
     idleCS();
 
     return id == 0x67;

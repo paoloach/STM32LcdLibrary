@@ -18,7 +18,6 @@ class HX8367: public GFX  {
 public:
     HX8367();
     static bool checkPresence();
-    void setRotation(RotationId rotation);
     void static reset();
 protected:
     void drawPixelInternal(Point && point, Color6Bit && color) override;

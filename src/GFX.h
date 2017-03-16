@@ -16,9 +16,6 @@ enum class LcdID {
     ID_932X, ID_7575, ID_9341, ID_HX8357D, ID_SPFD5408, ID_S6D0129, ID_HX8367, ID_UNKNOWN
 };
 
-enum class RotationId {
-    ROT_0, ROT_90, ROT_180, ROT_270
-};
 
 enum class DriverQuality {
     OFF, SMALL, MEDIUM_LOW, MEDIUM, MEDIUM_HIGH, HIGHT
@@ -141,7 +138,6 @@ private:
     void putCharPixel(Point p, uint8_t bits, uint8_t size);
 protected:
     LcdID driver;
-    RotationId rotation;
 
     const Font * font;
     Color6Bit foreground;

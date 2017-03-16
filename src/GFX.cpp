@@ -214,7 +214,6 @@ const Font smallFont = { 8, 12, 0x20, 0x5F, false, font8_12Data };
 GFX::GFX() :
         foreground(255, 255, 255), background(0, 0, 0) {
     driver = LcdID::ID_UNKNOWN;
-    rotation = RotationId::ROT_0;
     width = 0xFFFF;
     height = 0xFFFF;
     font = &bigFont;
@@ -414,11 +413,7 @@ void GFX::drawRect(Point leftTop, int16_t w, int16_t h, Color6Bit color) {
 }
 
 void GFX::fillRect(Point && leftTop, int16_t w, int16_t h, Color6Bit color) {
-//    for (int16_t i = leftTop.x; i < leftTop.x + w; i++) {
-//        drawFastVLine(Point { i, leftTop.y }, h, color);
-//    }
     int16_t x2, y2;
-
 
     if ((w <= 0) || (h <= 0) || (leftTop.x >= width) || (leftTop.y >= height) || ((x2 = leftTop.x + w - 1) < 0) || ((y2 = leftTop.y + h - 1) < 0))
         return;
