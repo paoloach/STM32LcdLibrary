@@ -64,19 +64,25 @@ public:
     }
 };
 
-constexpr Color6Bit WHITE(255, 255, 255);
-constexpr Color6Bit BLACK(0, 0, 0);
+constexpr Color6Bit WHITE(255,255,255);
+constexpr Color6Bit BLACK(0,0,0);
+constexpr Color6Bit DARKGRAY(0x40,0x40,0x40);
+constexpr Color6Bit GRAY(0x80,0x80,0x80);
+constexpr Color6Bit LIGHTGRAY(0xC0,0xC0,0xC0);
 
 class Point {
 
 public:
-    Point(Point && point) :
-            x(point.x), y(point.y) {
+    Point( Point && point): x(point.x), y(point.y){}
+
+    Point( Point & point): x(point.x), y(point.y){}
+
+    Point & operator=(const Point & a){
+        x = a.x;
+        y = a.y;
+        return *this;
     }
 
-    Point(Point & point) :
-            x(point.x), y(point.y) {
-    }
 
     constexpr Point(int x, int y) :
             x(x), y(y) {

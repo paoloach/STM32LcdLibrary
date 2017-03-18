@@ -234,7 +234,7 @@ void GFX::drawFastVLine(Point p, uint16_t length, Color6Bit color) {
         length = y2 - p.y + 1;
     }
 
-    p.x = width - p.x;
+    p.x = p.x;
     activeCS();
     setAddrWindow(p.x, p.y, p.x, y2);
     flood(color, length);
@@ -330,43 +330,43 @@ void GFX::fillCircleHelper(Point c, int16_t r, uint8_t cornername, int16_t delta
     }
 }
 
-// Bresenham's algorithm
 void GFX::drawLine(Point start, Point end, Color6Bit color) {
-    int16_t steep = abs(end.y - start.y) > abs(end.x - start.x);
-    if (steep) {
-        std::swap(start.x, start.y);
-        std::swap(end.x, end.y);
+    volatile int16_t dx = abs(end.x - start.x);
+    volatile int16_t dy = abs(end.y - start.y);
+
+    if (dx == 0) {
+        if (start.y < end.y)
+            drawFastVLine(start, dy, color);
+        else
+            drawFastVLine(end, dy, color);
+        return;
+    }
+    if (dy == 0) {
+        if (start.x < end.x)
+            drawFastHLine(start, dx, color);
+        else
+            drawFastHLine(end, dx, color);
+        return;
     }
 
-    if (start.x > end.x) {
-        std::swap(start.x, end.x);
-        std::swap(start.y, end.y);
-    }
+    if (start.x > end.x)
+        std::swap(start, end);
 
-    int16_t dx, dy;
-    dx = end.x - start.x;
-    dy = abs(end.y - start.y);
-
-    int16_t err = dx / 2;
-    int16_t ystep;
-
-    if (start.y < end.y) {
-        ystep = 1;
-    } else {
-        ystep = -1;
-    }
-
+    volatile int32_t steep = (((uint32_t) dy) << 16) / dx;
+    if (start.y > end.y)
+        steep = -steep;
+    volatile int32_t y     = (int32_t)start.y<<16;
+    volatile int32_t yPrev = (int32_t)start.y<<16;
     for (; start.x <= end.x; start.x++) {
-        if (steep) {
-            drawPixel(Point { start }, color);
+        dy = ((y-yPrev) >> 16);
+        uint16_t y1 = (std::min(y,yPrev)>> 16);
+        if (dy > 0){
+            drawFastVLine(Point(start.x,y1), dy, color);
         } else {
-            drawPixel(Point { start }, color);
+            drawPixel(Point(start.x, y1), color);
         }
-        err -= dy;
-        if (err < 0) {
-            start.y += ystep;
-            err += dx;
-        }
+        yPrev = y;
+        y += steep;
     }
 }
 
@@ -433,8 +433,6 @@ void GFX::fillRect(Point && leftTop, int16_t w, int16_t h, Color6Bit color) {
         y2 = height - 1;
         h = y2 - leftTop.y + 1;
     }
-
-    x2 = width - x2;
 
     activeCS();
     setAddrWindow(leftTop.x, leftTop.y, x2, y2);
