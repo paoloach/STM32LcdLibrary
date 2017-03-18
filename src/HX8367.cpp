@@ -50,10 +50,10 @@ HX8367::HX8367() {
     DisplayCtrl3::write(0x38);
     Timer::sleep(40);
     DisplayCtrl3::write(0x3F);
-    MemoryAccessCtrl::write(18);
+    MemoryAccessCtrl::write(0x48);
 
     setAddrWindow(0, 0, width - 1, height - 1);
-    flood(Color6Bit(255,255,255), width*height);
+    flood(Color6Bit(0,0,0), width*height);
 
     idleCS();
 }

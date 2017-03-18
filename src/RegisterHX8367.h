@@ -135,14 +135,9 @@ protected:
         dataPortToRead();
         RD_PORT->BRR = RD_PIN;
         RS_PORT->BSRR = RS_PIN;
-
+        // Wait for about 80ns
         __asm(
                 "nop\n" // 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
@@ -167,7 +162,6 @@ public:
                 "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
         );
         RegisterBase::writeDataByte(data);
     }
@@ -176,7 +170,6 @@ public:
         RegisterBase::writeIndex(static_cast<uint8_t>(index));
         __asm(
                 "nop\n" // 14 ns at 70 Mhz
-                "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
                 "nop\n"// 14 ns at 70 Mhz
