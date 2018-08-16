@@ -66,6 +66,13 @@ constexpr auto YP_ADC_PORT = ADC_Channel_0;
 constexpr auto YM_PORT=D7_PORT;
 constexpr auto YM_PIN=D7_PIN;
 
+constexpr auto AD_DOUT_PORT=GPIOA;
+#define AD_DOUT_PIN  GPIO_Pin_2
+constexpr auto AD_DIN_PORT=GPIOA;
+#define AD_DIN_PIN  GPIO_Pin_3
+constexpr auto AD_CS_PORT=GPIOA;
+#define AD_CS_PIN  GPIO_Pin_4
+
 
 
 

@@ -22,23 +22,50 @@ ILI9341::ILI9341() {
     resetOff();
     Timer::sleep(150);
 
-    DisplayOff::apply();
-    PowerCtl1::write(0x23);
-    PowerCtl2::write(0x10);
-    VCOMCtl1::write(0x3e28);
-    VCOMCtl2::write(0x86);
-    //VCOMCtl2::write(0xC0);
-    MemAccessCtrl::write (MADCTL_MY);
-    PixelFormatSet::write(0x66);
-    FrameCtrl::write(0x1B00);
-    DisplayFnCtl::write(0x08, 0x82, 0x27);
-    EntryModeSet::write(0x07);
+    auto ILI9341Id = ReadId::read();
 
-    SleepOff::apply();
-    Timer::sleep(150);
-    DisplayOn::apply();
-    Timer::sleep(500);
+    if (ILI9341Id[0] == 0x00 && ILI9341Id[1] == 0x93 && ILI9341Id[2] == 0x41) {
+        driver = LcdID::ID_9341;
+    }
+    if (ILI9341Id[0] == 0x00 && ILI9341Id[1] == 0x93 && ILI9341Id[2] == 0x42) {
+        driver = LcdID::ID_9342;
+    }
+    if (ILI9341Id[0] == 0x00 && ILI9341Id[1] == 0x93 && ILI9341Id[2] == 0x38) {
+        driver = LcdID::ID_9338;
+    }
+    if (driver == LcdID::ID_9338){
+        Reset::apply();
+        HAL_Delay(150);
+        DisplayOff::apply();
+        PixelFormatSet::write(0x66);
+        MemAccessCtrl::write(0b10100000);
+        SleepOff::apply();
+        HAL_Delay(150);
+        DisplayOn::apply();
+        HAL_Delay(150);
+        DisplayInvertOff::apply();
+    } else {
 
+        DisplayOff::apply();
+        PowerCtl1::write(0x23);
+        PowerCtl2::write(0x10);
+        VCOMCtl1::write(0x3e28);
+        VCOMCtl2::write(0x86);
+        //VCOMCtl2::write(0xC0);
+        if (driver == LcdID::ID_9341)
+            MemAccessCtrl::write(MADCTL_MY);
+        if (driver == LcdID::ID_9342)
+            MemAccessCtrl::write(MADCTL_MV | MADCTL_MY);
+        PixelFormatSet::write(0x66);
+        FrameCtrl::write(0x1B00);
+        DisplayFnCtl::write(0x08, 0x82, 0x27);
+        EntryModeSet::write(0x07);
+
+        SleepOff::apply();
+        Timer::sleep(150);
+        DisplayOn::apply();
+        Timer::sleep(500);
+    }
     setAddrWindow(0, 0, width - 1, height - 1);
 
     flood(Color6Bit(255,255,255), width*height);
@@ -57,8 +84,15 @@ bool ILI9341::checkPresence() {
     auto ILI9341Id = ReadId::read();
     idleCS();
 
-    if (ILI9341Id[0] == 0x00 && ILI9341Id[1] == 0x93 && ILI9341Id[2] == 0x41)
+    if (ILI9341Id[0] == 0x00 && ILI9341Id[1] == 0x93 && ILI9341Id[2] == 0x41){
         result = true;
+    }
+    if (ILI9341Id[0] == 0x00 && ILI9341Id[1] == 0x93 && ILI9341Id[2] == 0x42){
+        result = true;
+    }
+    if (ILI9341Id[0] == 0x00 && ILI9341Id[1] == 0x93 && ILI9341Id[2] == 0x38){
+        result = true;
+    }
     return result;
 }
 

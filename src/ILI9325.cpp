@@ -8,17 +8,29 @@
 #include <stdlib.h>
 #include "ILI9325.h"
 #include "RegisterILI9325.h"
+#include "diag/Trace.h"
 #include "Timer.h"
 
 // @formatter:off
 
-std::array<ILI9325::InitCmd, 43> ILI9325::ILI9320_init = { ILI9325::InitCmd { ILI9325_REG::ILI9325_StartOdc, 0x0000 }, { ILI9325_REG::WAIT, 100 }, { ILI9325_REG::ILI9325_DriverOutControl, 0 << 8 }, {
-        ILI9325_REG::ILI9325_LCDDriverControl, (1 << 10) | (1 << 8) }, { ILI9325_REG::ILI9325_EntryMode, (1 << 15) | (1 << 14) | (1 << 5) | (1 << 4) }, { ILI9325_REG::ILI9325_ResizeCtrl, 0x0000 }, {
-        ILI9325_REG::ILI9325_DisplCtrl2, (1 << 9) | (1 << 1) }, { ILI9325_REG::ILI9325_DisplCtrl3, 0x0000 }, { ILI9325_REG::ILI9325_DisplCtrl4, 0x0000 }, { ILI9325_REG::ILI9325_RGBCtrll, (1 << 1)
-        | (1 << 0) },
-
-{ ILI9325_REG::ILI9325_FrmMarkerPos, 0x0000 }, { ILI9325_REG::ILI9325_RGBCtrl2, 0x0000 }, { ILI9325_REG::WAIT, 50 }, { ILI9325_REG::ILI9325_DisplCtrl1, (1 << 8) | (1 << 0) },
-        { ILI9325_REG::WAIT, 50 }, { ILI9325_REG::ILI9325_PowerCtrl1, (1 << 12) | (1 << 7) | (1 << 6) }, { ILI9325_REG::ILI9325_PowerCtrl2, (1 << 2) | (1 << 1) | (1 << 0) }, {
+std::array<ILI9325::InitCmd, 43> ILI9325::ILI9320_init = {
+        ILI9325::InitCmd { ILI9325_REG::ILI9325_StartOdc, 0x0000 },
+        { ILI9325_REG::WAIT, 100 },
+        { ILI9325_REG::ILI9325_DriverOutControl, 0x100},
+        { ILI9325_REG::ILI9325_LCDDriverControl, 0x0700},
+        { ILI9325_REG::ILI9325_EntryMode, (1 << 15) | (1 << 14) | (1 << 5) | (1 << 4) },
+        { ILI9325_REG::ILI9325_ResizeCtrl, 0x0000 },
+        { ILI9325_REG::ILI9325_DisplCtrl2, 0x0202 },
+        { ILI9325_REG::ILI9325_DisplCtrl3, 0x0000 },
+        { ILI9325_REG::ILI9325_DisplCtrl4, 0x0000 },
+        { ILI9325_REG::ILI9325_RGBCtrll, (1 << 1)  | (1 << 0) },
+        { ILI9325_REG::ILI9325_FrmMarkerPos, 0x0000 },
+        { ILI9325_REG::ILI9325_RGBCtrl2, 0x0000 },
+        { ILI9325_REG::WAIT, 50 },
+        { ILI9325_REG::ILI9325_DisplCtrl1, (1 << 8) | (1 << 0) },
+        { ILI9325_REG::WAIT, 50 },
+        { ILI9325_REG::ILI9325_PowerCtrl1, (1 << 12) | (1 << 7) | (1 << 6) },
+        { ILI9325_REG::ILI9325_PowerCtrl2, (1 << 2) | (1 << 1) | (1 << 0) }, {
                 ILI9325_REG::ILI9325_PowerCtrl3, (1 << 8) | (1 << 4) }, { ILI9325_REG::ILI9320_PowerCtrl4, (1 << 11) | (1 << 9) | (1 << 8) }, { ILI9325_REG::ILI9325_PowerCtrl7, 0 },
 
         { ILI9325_REG::ILI9325_FrameCtrl, (1 << 15) | (1 << 5) | (0 << 4) }, { ILI9325_REG::WAIT, 50 }, { ILI9325_REG::ILI9325_HorStart, 0x0000 }, { ILI9325_REG::ILI9325_HorEnd, 0x00EF }, {
@@ -28,11 +40,16 @@ std::array<ILI9325::InitCmd, 43> ILI9325::ILI9320_init = { ILI9325::InitCmd { IL
         { ILI9325_REG::ILI9325_BaseDisplayCtrl, (1 << 0) }, { ILI9325_REG::ILI9325_VertScrollCtrl, 0x0000 },
 
         { ILI9325_REG::ILI9320_PartImage1Display, 0X0000 }, { ILI9325_REG::ILI9320_PartImage1AresStart, 0X0000 }, { ILI9325_REG::ILI9320_PartImage1AreaEnd, 0X0000 }, {
-                ILI9325_REG::ILI9320_PartImage2Display, 0X0000 }, { ILI9325_REG::ILI9320_PartImage2AresStart, 0X0000 }, { ILI9325_REG::ILI9320_PartImage2AreaEnd, 0X0000 }, {
-                ILI9325_REG::ILI9325_PanelIfCtrl1, 0X0000 }, { ILI9325_REG::ILI9325_PanelIfCtrl2, 0X0000 }, { ILI9325_REG::ILI9320_PanelIfCtrl3, (1 << 1) }, { ILI9325_REG::ILI9325_PanelIfCtrl4, (1
-                << 8) | (1 << 4) },
-
-        { ILI9325_REG::ILI9320_PanelIfCtrl5, 0X0000 }, { ILI9325_REG::ILI9320_PanelIfCtrl6, 0X0000 }, { ILI9325_REG::ILI9325_DisplCtrl1, (1 << 8) | (1 << 5) | (1 << 4) | (1 << 1) | (1 << 0) } };
+        ILI9325_REG::ILI9320_PartImage2Display, 0X0000 },
+        { ILI9325_REG::ILI9320_PartImage2AresStart, 0X0000 },
+        { ILI9325_REG::ILI9320_PartImage2AreaEnd, 0X0000 },
+        { ILI9325_REG::ILI9325_PanelIfCtrl1, 0X0010 },
+        { ILI9325_REG::ILI9325_PanelIfCtrl2, 0X0000 },
+        { ILI9325_REG::ILI9320_PanelIfCtrl3, 0x0003 },
+        { ILI9325_REG::ILI9325_PanelIfCtrl4, 0x0110 },
+        { ILI9325_REG::ILI9320_PanelIfCtrl5, 0X0000 },
+        { ILI9325_REG::ILI9320_PanelIfCtrl6, 0X0000 },
+        { ILI9325_REG::ILI9325_DisplCtrl1, 0x0173} };
 
 std::array<ILI9325::InitCmd, 48> ILI9325::ILI9235_init = { ILI9325::InitCmd { ILI9325_REG::ILI9325_StartOdc, 0x001 }, { ILI9325_REG::WAIT, 50 }, { ILI9325_REG::ILI9325_DriverOutControl, 0x0100 }, {
         ILI9325_REG::ILI9325_LCDDriverControl, 0x0700 }, { ILI9325_REG::ILI9325_EntryMode, 0x1030 }, { ILI9325_REG::ILI9325_ResizeCtrl, 0x0000 }, { ILI9325_REG::ILI9325_DisplCtrl2, 0x0202 }, {
@@ -96,7 +113,6 @@ ILI9325::ILI9325(bool swapX) :
 
     uint16_t code = ILI9325_DriverCodeRead::get();
     dataPortToWrite();
-    code = 0x9320;
     if (code == 0x0129) {
         driver = LcdID::ID_S6D0129;
         initS6D0129();
@@ -111,6 +127,7 @@ ILI9325::ILI9325(bool swapX) :
         swapX = true;
     }
     flood(Color6Bit(0, 0, 0), DEFAULT_HEIGTH * DEFAULT_WIDTH);
+    setAddrWindow(0,0,width-1,height-1);
 }
 
 bool ILI9325::checkPresence() {
@@ -182,7 +199,7 @@ void ILI9325::initS6D0129() {
 
 void ILI9325::setAddrWindow(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
     if (driver == LcdID::ID_932X) {
-        ILI9325_HorStart::write(left); // Set address window
+        ILI9325_HorStart::write(left);
         ILI9325_HorEnd::write(right);
         ILI9325_VertStart::write(top);
         ILI9325_VertEnd::write(bottom);
@@ -220,20 +237,7 @@ void ILI9325::flood(Color6Bit color, uint32_t len) {
     ILI9325_RamRW::write(color, len);
 }
 
-void ILI9325::drawPixel(Point p, Color6Bit color) {
-    if ((p.x < 0) || (p.y < 0) || (p.x >= width) || (p.y >= height))
-        return;
-    p.x = width - p.x;
-
-    activeCS();
-    ILI9325_RamAddressHor::write(p.x);
-    ILI9325_RamAddressVert::write(p.y);
-    ILI9325_RamRW::write(color);
-    idleCS();
-}
-
-void ILI9325::drawPixelInternal(Point && p, Color6Bit && color) {
-    p.x = width - p.x;
+void ILI9325::drawPixelInternal( Point && p, Color6Bit && color) {
 
     ILI9325_RamAddressHor::write(p.x);
     ILI9325_RamAddressVert::write(p.y);
